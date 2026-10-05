@@ -39,11 +39,11 @@ jobs:
         run: $HOME/go/bin/ffuf \
           -u http://localhost:3000/rest/user/login \
           -X POST \
-          -H "Content-Type: application/json" \
-          -d '{"email":"FUZZ","password":"anothervalue"}' \
+          -H Content-Type: application/json \
+          -d {"email":"FUZZ","password":"anothervalue"} \
           -w sqli-payloads.txt \
           -mc 200 \
-          -mr "authentication" \
+          -mr authentication \
           -t 10 \
           -o ffuf-result.json \
           -of json \
