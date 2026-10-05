@@ -55,7 +55,8 @@ jobs:
             echo "No results file found"
           fi
 
-      - name: Upload results
+      - name: Upload Artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: security-reports-bundle
@@ -63,3 +64,4 @@ jobs:
             ffuf-result.json
             ffuf-debug.log
             juice-logs.log
+            sqli-payloads.txt
