@@ -44,7 +44,7 @@ jobs:
           python-version: '3.11'
 
       - name: Run fuzzing script
-        run: python github.com/shatunovya/fuzzing/fuzz.py
+        run: python ../fuzz.py
 
       - name: Upload results
         if: always()
