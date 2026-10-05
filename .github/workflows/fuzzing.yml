@@ -1,0 +1,58 @@
+name: Fuzzing
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  security-events: write
+  actions: read
+
+jobs:
+  ffuf:
+    runs-on: ubuntu-latest
+    services:
+      juice:
+        image: bkimminich/juice-shop
+        ports:
+          - 3000:3000
+    
+    steps:
+      - name: Wait for service
+        run: |
+            sleep 10 
+            curl --path-as-is -i -s -k -X $'POST' \
+              -H $'Host: localhost:3000' -H $'Content-Length: 43' -H $'Content-Type: application/json' -H $'Connection: keep-alive' \
+              --data-binary $'{\"email\":\"\' or 1=1 -- -\",\"password\":\"pass\"}' \
+              $'http://localhost:3000/rest/user/login'
+
+      - name: Get payloads
+        run: |
+          wget -O sqli-payloads.txt \
+            https://raw.githubusercontent.com/swisskyrepo/PayloadsAllTheThings/refs/heads/master/SQL%20Injection/Intruder/SQL-Injection
+          echo "Payloads: $(wc -l < sqli-payloads.txt) lines"
+
+      - name: Install ffuf
+        run: go install github.com/ffuf/ffuf/v2@latest
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run fuzzing script
+        run: python fuzz.py
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports-bundle
+          path: |
+            ffuf-result.json
+            ffuf-debug.log
+            juice-logs.log
+            sqli-payloads.txt
