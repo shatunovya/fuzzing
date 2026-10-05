@@ -55,6 +55,15 @@ jobs:
             echo "No results file found"
           fi
 
+      - name: Extract SQLi Vectors (for Report)
+        run: |
+          if [ -f ffuf-result.json ]; then
+            jq -r '.results[] | "PAYLOAD: \(.input.FUZZ)\nSTATUS: \(.status)\nLENGTH: \(.length)\nURL: \(.url)\n---"' ffuf-result.json > sqli-summary.txt
+            echo "Summary created: $(wc -l < sqli-summary.txt) vectors found"
+          else
+            echo "No ffuf-result.json found"
+          fi
+          
       - name: Save Container Logs
         if: always()
         run: |
@@ -70,3 +79,4 @@ jobs:
             ffuf-debug.log
             juice-logs.log
             SQL-Injection
+            sqli-summary.txt
