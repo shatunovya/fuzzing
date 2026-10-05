@@ -49,30 +49,21 @@ jobs:
           -of json \
           -debug-log ffuf-debug.log
 
-      - name: Parse and Show Results (Safe YAML)
+      - name: Show Results
         run: |
-          python3 -c "
-import json
-try:
-    with open('ffuf-result.json') as f:
-        data = json.load(f)
-    results = data.get('results', [])
-    print(f'=== Found {len(results)} potential hits ===')
-    if results:
-        for i, r in enumerate(results, 1):
-            payload = r.get('input', {}).get('FUZZ', 'N/A')
-            status = r.get('status', 'N/A')
-            length = r.get('length', 'N/A')
-            print(f'{i}. Payload: {payload} | Status: {status} | Length: {length}')
-        print('::error::SQL Injection vector detected!')
-        exit(1)
-    else:
-        print('No SQLi vectors detected.')
-        exit(0)
-except Exception as e:
-    print(f'Error parsing results: {e}')
-    exit(1)
-"
+          if [ -f ffuf-result.json ]; then
+            HITS=$(grep -o '"input"' ffuf-result.json | wc -l)
+            echo "Found $HITS hits"
+            if [ "$HITS" -gt 0 ]; then
+              echo "SQL Injection vector detected!"
+              cat ffuf-result.json
+              exit 1
+            else
+              echo "No SQLi vectors detected."
+            fi
+          else
+            echo "No results file found"
+          fi
 
       - name: Upload results
         uses: actions/upload-artifact@v4
