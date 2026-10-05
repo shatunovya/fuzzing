@@ -49,8 +49,9 @@ jobs:
           -of json \
           -debug-log ffuf-debug.log
 
-      - name: Parse and Show Results
-        run: python3 -c "
+      - name: Parse and Show Results (Safe YAML)
+        run: |
+          python3 -c "
 import json
 try:
     with open('ffuf-result.json') as f:
@@ -60,7 +61,9 @@ try:
     if results:
         for i, r in enumerate(results, 1):
             payload = r.get('input', {}).get('FUZZ', 'N/A')
-            print(f'{i}. Payload: {payload} | Status: {r.get('status')} | Length: {r.get('length')}')
+            status = r.get('status', 'N/A')
+            length = r.get('length', 'N/A')
+            print(f'{i}. Payload: {payload} | Status: {status} | Length: {length}')
         print('::error::SQL Injection vector detected!')
         exit(1)
     else:
