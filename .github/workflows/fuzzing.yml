@@ -55,6 +55,11 @@ jobs:
             echo "No results file found"
           fi
 
+      - name: Save Container Logs
+        if: always()
+        run: |
+          docker logs $(docker ps -q) > juice-logs.log || true
+
       - name: Upload Artifacts
         if: always()
         uses: actions/upload-artifact@v4
