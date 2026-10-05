@@ -35,21 +35,41 @@ jobs:
         run: |
           go install github.com/ffuf/ffuf/v2@latest
 
-      - name: Run fuzzing
-        run: |
-          $HOME/go/bin/ffuf -w SQL-Injection \
-            -d '{"email": "FUZZ", "password": "anothervalue"}'  \
-            -H "Content-Type: application/json" \
-            -X POST \
-            -u http://localhost:3000/rest/user/login \
-            -fc 400 \
-            -o ffuf-result.json \
-            -debug-log ffuf-debug.log \
-            -of json || true
+      - name: Run FFUF directly
+        run: $HOME/go/bin/ffuf \
+          -u http://localhost:3000/rest/user/login \
+          -X POST \
+          -H "Content-Type: application/json" \
+          -d '{"email":"FUZZ","password":"anothervalue"}' \
+          -w sqli-payloads.txt \
+          -mc 200 \
+          -mr "authentication" \
+          -t 10 \
+          -o ffuf-result.json \
+          -of json \
+          -debug-log ffuf-debug.log
 
-      - name: Get Logs from Service
-        run: |
-          docker logs $(docker ps -q) > juice-logs.log
+      - name: Parse and Show Results
+        run: python3 -c "
+import json
+try:
+    with open('ffuf-result.json') as f:
+        data = json.load(f)
+    results = data.get('results', [])
+    print(f'=== Found {len(results)} potential hits ===')
+    if results:
+        for i, r in enumerate(results, 1):
+            payload = r.get('input', {}).get('FUZZ', 'N/A')
+            print(f'{i}. Payload: {payload} | Status: {r.get('status')} | Length: {r.get('length')}')
+        print('::error::SQL Injection vector detected!')
+        exit(1)
+    else:
+        print('No SQLi vectors detected.')
+        exit(0)
+except Exception as e:
+    print(f'Error parsing results: {e}')
+    exit(1)
+"
 
       - name: Upload results
         uses: actions/upload-artifact@v4
