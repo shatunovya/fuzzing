@@ -57,6 +57,7 @@ jobs:
 
       - name: Extract SQLi Vectors (for Report)
         run: |
+        if: always()
           if [ -f ffuf-result.json ]; then
             jq -r '.results[] | "PAYLOAD: \(.input.FUZZ)\nSTATUS: \(.status)\nLENGTH: \(.length)\nURL: \(.url)\n---"' ffuf-result.json > sqli-summary.txt
             echo "Summary created: $(wc -l < sqli-summary.txt) vectors found"
