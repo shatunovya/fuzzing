@@ -36,18 +36,8 @@ jobs:
           go install github.com/ffuf/ffuf/v2@latest
 
       - name: Run FFUF directly
-        run: $HOME/go/bin/ffuf \
-          -u http://localhost:3000/rest/user/login \
-          -X POST \
-          -H Content-Type: application/json \
-          -d {"email":"FUZZ","password":"anothervalue"} \
-          -w sqli-payloads.txt \
-          -mc 200 \
-          -mr authentication \
-          -t 10 \
-          -o ffuf-result.json \
-          -of json \
-          -debug-log ffuf-debug.log
+        run: |
+          $HOME/go/bin/ffuf -u http://localhost:3000/rest/user/login -X POST -H "Content-Type: application/json" -d '{"email":"FUZZ","password":"anothervalue"}' -w sqli-payloads.txt -mc 200 -mr "authentication" -t 10 -o ffuf-result.json -of json -debug-log ffuf-debug.log
 
       - name: Show Results
         run: |
